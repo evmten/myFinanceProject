@@ -1,10 +1,8 @@
 import tkinter as tk               
-from tkinter import CENTER, W, Label, font as tkfont
+from tkinter import CENTER, RIGHT, W, Label, Scrollbar, font as tkfont
 from tkinter import ttk
 import sqlite3 as lite
 from tkinter import messagebox
-
-from numpy import record
 
 root =tk.Tk
 
@@ -84,8 +82,18 @@ class IncomeData(tk.Frame):
                             command=lambda: controller.show_frame("Main"))
         btn_main.pack(pady=10)
 
+        income_frame = tk.Frame(self)
+        income_frame.pack(pady=20)
+
+        incomeShowDataScroll = Scrollbar(income_frame)
+        incomeShowDataScroll.pack(side=tk.RIGHT, fill=tk.Y)
+
         #Define Our Columns
-        income_tree = ttk.Treeview(self)
+        income_tree = ttk.Treeview(income_frame, yscrollcommand=incomeShowDataScroll.set)
+        income_tree.pack()
+
+        incomeShowDataScroll.config(command=income_tree.yview)
+        #
         income_tree['columns'] = ("ID", "Date", "Salaris")
         
         #Formate Our Columns
@@ -318,9 +326,19 @@ class ExpensesData(tk.Frame):
         btn_main = tk.Button(self, text="<< Main", font = "Arial 10 bold", activeforeground='green',
                             command=lambda: controller.show_frame("Main"))
         btn_main.pack(pady=10)
+        
+        expenses_frame = tk.Frame(self)
+        expenses_frame.pack(pady=20)
+
+        expensesShowDataScroll = Scrollbar(expenses_frame)
+        expensesShowDataScroll.pack(side=tk.RIGHT, fill=tk.Y)
 
         #Define Our Columns
-        expenses_tree = ttk.Treeview(self)
+        expenses_tree = ttk.Treeview(expenses_frame, yscrollcommand=expensesShowDataScroll.set)
+        expenses_tree.pack()
+
+        expensesShowDataScroll.config(command=expenses_tree.yview)
+
         expenses_tree['columns'] = ("ID", "Date", "Amount")
         
         #Formate Our Columns
