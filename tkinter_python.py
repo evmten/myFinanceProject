@@ -1,8 +1,12 @@
+from cProfile import label
 import tkinter as tk               
-from tkinter import CENTER, RIGHT, W, Label, Scrollbar, font as tkfont
+from tkinter import CENTER, E, LEFT, RIGHT, W, Label, Scrollbar, font as tkfont
 from tkinter import ttk
 import sqlite3 as lite
 from tkinter import messagebox
+from matplotlib.pyplot import text
+
+from numpy import empty
 
 root =tk.Tk
 
@@ -83,7 +87,7 @@ class IncomeData(tk.Frame):
         btn_main.pack(pady=10)
 
         income_frame = tk.Frame(self)
-        income_frame.pack(pady=20)
+        income_frame.pack(pady=10)
 
         incomeShowDataScroll = Scrollbar(income_frame)
         incomeShowDataScroll.pack(side=tk.RIGHT, fill=tk.Y)
@@ -99,50 +103,66 @@ class IncomeData(tk.Frame):
         #Formate Our Columns
         income_tree.column("#0", width=0, stretch='NO')
         income_tree.column("ID", anchor=W, width=30)
-        income_tree.column("Date", anchor=CENTER, width=120)
-        income_tree.column("Salaris", anchor=W, width=120)
+        income_tree.column("Date", anchor=CENTER, width=80)
+        income_tree.column("Salaris", anchor=W, width=50)
 
         # Create Headings
         income_tree.heading("#0", text="Label", anchor=W)
         income_tree.heading("ID", text="ID", anchor=W)
         income_tree.heading("Date", text="Date", anchor=CENTER)
         income_tree.heading("Salaris", text="Salaris", anchor=W)
+        
+        style = ttk.Style()
+        style.theme_use('default')
+        style.map('income_frame')
 
-        income_tree.pack(pady=20)
+        income_tree.pack(pady=5)
 
         add_frame = ttk.Frame(self)
         add_frame.pack(pady=20)
 
         #Labels
         id_lbl = Label(add_frame, text="ID")
-        id_lbl.grid(row=0, column=0)
+        id_lbl.grid(row=2, column=0)
 
         date_lbl = Label(add_frame, text="Date")
-        date_lbl.grid(row=0, column=1)
+        date_lbl.grid(row=2, column=1)
 
         salaris_lbl = Label(add_frame, text= "Salaris")
-        salaris_lbl.grid(row=0, column=2)
+        salaris_lbl.grid(row=2, column=2)
 
         #Entry boxes
         id_box = ttk.Entry(add_frame)
-        id_box.grid(row=1, column=0)
+        id_box.grid(row=3, column=0)
 
         date_box = ttk.Entry(add_frame)
-        date_box.grid(row=1, column=1)
+        date_box.grid(row=3, column=1)
 
         salaris_box = ttk.Entry(add_frame)
-        salaris_box.grid(row=1, column=2)
+        salaris_box.grid(row=3, column=2)
         
         def view_incomeData():
-
+            
+            income_tree.delete(*income_tree.get_children())
             try:
                 connection = lite.connect('MyFinance.db')
                 with connection:
                     cursor = connection.cursor()
                     cursor.execute('''SELECT * FROM  incomeData''')
                     records =  cursor.fetchall()
+                    recordSum = 0
                     for record in records:
                         income_tree.insert("", tk.END, values=record)
+                        recordSum = record[2]+ recordSum
+
+                    global recordSumLbl
+                    recordSumLbl = Label(income_frame, text = str(recordSum))
+                    recordSumLbl.pack(side=RIGHT)
+
+                    global totalLbl
+                    totalLbl = Label(income_frame, text="Total")
+                    totalLbl.pack(side=RIGHT)
+
             except lite.Error as er:
                 print(er)
                 return 0
@@ -175,6 +195,7 @@ class IncomeData(tk.Frame):
                 popup_win = tk.Toplevel()
 
                 if ((len(id_box.get()) != 0) & (len(date_box.get()) != 0) & (len(salaris_box.get()) !=0)):
+
                     incomedata = (id_box.get(), date_box.get(), salaris_box.get())
                     query_db()
                     try:
@@ -187,7 +208,11 @@ class IncomeData(tk.Frame):
                     self.myLabelSaved2.pack(fill = 'both', expand = 1, ipadx = 25, ipady = 5)
                     
                     clear_boxes()
-                    
+
+                    recordSumLbl.destroy()
+                    totalLbl.destroy()
+                    view_incomeData()
+
                 else:
 
                     self.myLabelRequired = tk.Label(popup_win, text = "Input Required", font = "Arial 13 bold", fg = 'red')
@@ -232,6 +257,11 @@ class IncomeData(tk.Frame):
                             connection.commit()
                             income_tree.item(selected_item, text = "", values = (id_box.get(), date_box.get(), salaris_box.get()))
                     connection.close()
+
+                    recordSumLbl.destroy()
+                    totalLbl.destroy()
+                    view_incomeData()
+
                     # Clear entry boxes
                     id_box.delete(0, tk.END)
                     date_box.delete(0, tk.END)
@@ -257,6 +287,10 @@ class IncomeData(tk.Frame):
                             income_tree.delete(selected_item)
                     connection.close()
 
+                    recordSumLbl.destroy()
+                    totalLbl.destroy()
+                    view_incomeData()
+
                 except lite.Error as er:
                     print(er)
                     return 0
@@ -276,6 +310,10 @@ class IncomeData(tk.Frame):
                         cursor.execute('''DROP TABLE incomeData''')
                         connection.commit()
                         connection.close()
+
+                    recordSumLbl.destroy()
+                    totalLbl.destroy()
+                    view_incomeData()
 
                 except lite.Error as er:
                     print(er)
@@ -322,13 +360,14 @@ class ExpensesData(tk.Frame):
         
         query_db()
 
+
         #Main menu button
         btn_main = tk.Button(self, text="<< Main", font = "Arial 10 bold", activeforeground='green',
                             command=lambda: controller.show_frame("Main"))
-        btn_main.pack(pady=10)
+        btn_main.pack(pady=5)
         
         expenses_frame = tk.Frame(self)
-        expenses_frame.pack(pady=20)
+        expenses_frame.pack(pady=10)
 
         expensesShowDataScroll = Scrollbar(expenses_frame)
         expensesShowDataScroll.pack(side=tk.RIGHT, fill=tk.Y)
@@ -344,8 +383,8 @@ class ExpensesData(tk.Frame):
         #Formate Our Columns
         expenses_tree.column("#0", width=0, stretch='NO')
         expenses_tree.column("ID", anchor=W, width=30)
-        expenses_tree.column("Date", anchor=CENTER, width=120)
-        expenses_tree.column("Amount", anchor=W, width=120)
+        expenses_tree.column("Date", anchor=CENTER, width=80)
+        expenses_tree.column("Amount", anchor=W, width=50)
 
         # Create Headings
         expenses_tree.heading("#0", text="Label", anchor=W)
@@ -380,14 +419,27 @@ class ExpensesData(tk.Frame):
         
         def view_expensesData():
 
+            expenses_tree.delete(*expenses_tree.get_children())
+
             try:
                 connection = lite.connect('MyFinance.db')
                 with connection:
                     cursor = connection.cursor()
                     cursor.execute('''SELECT * FROM  expensesData''')
                     records =  cursor.fetchall()
+                    recordSum = 0
                     for record in records:
                         expenses_tree.insert("", tk.END, values=record)
+                        recordSum = record[2]+ recordSum
+
+                    global recordSumLbl
+                    recordSumLbl = Label(expenses_frame, text = str(recordSum))
+                    recordSumLbl.pack(side=RIGHT)
+
+                    global totalLbl
+                    totalLbl = Label(expenses_frame, text="Total")
+                    totalLbl.pack(side=RIGHT)
+
             except lite.Error as er:
                 print(er)
                 return 0
@@ -431,6 +483,10 @@ class ExpensesData(tk.Frame):
                     self.myLabelSaved2 = tk.Label(popup_win, text = "Saved", font = "Arial 13 bold", fg = 'green')
                     self.myLabelSaved2.pack(fill = 'both', expand = 1, ipadx = 25, ipady = 5)
                     
+                    recordSumLbl.destroy()
+                    totalLbl.destroy()
+                    view_expensesData()
+
                     clear_boxes()
                     
                 else:
@@ -482,6 +538,10 @@ class ExpensesData(tk.Frame):
                     date_box.delete(0, tk.END)
                     amount_box.delete(0, tk.END)
 
+                    recordSumLbl.destroy()
+                    totalLbl.destroy()
+                    view_expensesData()
+
                 except lite.Error as er:
                     print(er)
                     return 0
@@ -501,6 +561,10 @@ class ExpensesData(tk.Frame):
                             connection.commit()
                             expenses_tree.delete(selected_item)
                     connection.close()
+                    
+                    recordSumLbl.destroy()
+                    totalLbl.destroy()
+                    view_expensesData()
 
                 except lite.Error as er:
                     print(er)
@@ -522,13 +586,17 @@ class ExpensesData(tk.Frame):
                         connection.commit()
                         connection.close()
 
+                    recordSumLbl.destroy()
+                    totalLbl.destroy()
+                    view_expensesData()
+
                 except lite.Error as er:
                     print(er)
                     return 0
 
         #Buttons
         add_record = ttk.Button(self, text= "Add Record", command = add_record)
-        add_record.pack(pady = 10)
+        add_record.pack(pady = 5)
 
         #Select Record
         select_record = ttk.Button(self, text = "Select Record", command = select_record)
